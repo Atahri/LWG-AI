@@ -123,30 +123,27 @@ var constructBuilding = function(newBuilding) {
 	var myPlayerNumber = scope.getMyPlayerNumber();
 
 	var forgeBuilders = scope.getUnits({type: "Worker", order: "Build Forge", player: myPlayerNumber});
-	if (forgeBuilders.length > 1){
-		scope.order("Stop", [forgeBuilders[1]]);
+	if (forgeBuilders.length == 1 && newBuilding == "Forge"){
+		return;
 	}
 	var watchtowerBuilders = scope.getUnits({type: "Worker", order: "Build Watchtower", player: myPlayerNumber});
-	if (watchtowerBuilders.length > 1){
-		scope.order("Stop", [watchtowerBuilders[1]]);
+	if (watchtowerBuilders.length == 1 && newBuilding == "Watchtower"){
+		return;
 	}
 	
 	var barracksBuilders = scope.getUnits({type: "Worker", order: "Build Barracks", player: myPlayerNumber});
-	if (barracksBuilders.length > 1){
-		scope.order("Stop", [barracksBuilders[1]]);
-	}
-	var castleBuilders = scope.getUnits({type: "Worker", order: "Build Castle", player: myPlayerNumber});
-	if (castleBuilders.length > 1){
-		scope.order("Stop", [castleBuilders[1]]);
+	if (barracksBuilders.length == 1 && newBuilding == "Barracks"){
+		return;
 	}
 	var houseBuilders = scope.getUnits({type: "Worker", order: "Build House", player: myPlayerNumber});
-	if (houseBuilders.length > 1){
-		scope.order("Stop", [houseBuilders[1]]);
+	if (houseBuilders.length == 1 && newBuilding == "House"){
+		return;
 	}
 	var guildBuilders = scope.getUnits({type: "Worker", order: "Build Mages Guild", player: myPlayerNumber});
-	if (guildBuilders.length > 1){
-		scope.order("Stop", [guildBuilders[1]]);
+	if (guildBuilders.length == 1 && newBuilding == "Mages Guild"){
+		return;
 	}
+	var castleBuilders = scope.getUnits({type: "Worker", order: "Build Castle", player: myPlayerNumber});
 	var numBuilders = forgeBuilders.length + watchtowerBuilders.length + barracksBuilders.length + castleBuilders.length + houseBuilders.length + guildBuilders.length;
 
 	var finishedBuildings = scope.getBuildings({player:myPlayerNumber, onlyFinshed: true});
@@ -154,11 +151,14 @@ var constructBuilding = function(newBuilding) {
 	
 	if (numBuilders > (allBuildings.length - finishedBuildings.length)){
 		// console.log("Shouldn't build now!")
-		return; // don't try to build one thing twice at the same time - removes bad behaviour
+		return; // don't try to build one thing twice at the same time - removes bad behaviour when two building types will be started at the same location
 	}
 	// console.log("Building " + newBuilding);
 
-	var workers = scope.getUnits({type: "Worker", order: "Mine", player: myPlayerNumber});
+	var isNotBuilder = function(element){
+		return element.unit.order.name != "Repair"; //element.unit.order.name.split(" ")[0] != "Build" && 
+	}
+	var workers = scope.getUnits({type: "Worker", player: myPlayerNumber}).filter(isNotBuilder);
 
 	var mines = scope.getBuildings({type: "Goldmine"});
 	
@@ -523,12 +523,14 @@ if (enemies.length > 0) {
 
 //Get enemy buildings
 //For whatever reason neutral buildings and goldmines get included so we gotta be careful of those
-var enemyBuildings = getBuildings({enemyOf: myPlayerNumber});
+var enemyBuildings = getBuildings({enemyOf: myPlayerNumber, notOftype:"Goldmine"});
 
 //Set the main enemy as the enemy with a building closest to you
 //This method of picking a target seems bad and I will change it later
 var closestEnemyBuildingDist = 99999;
 var closestEnemyBuilding = null;
+var closestNeutralBuildingDist = 25;
+var closestNeutralBuilding = null;
 if (myBuildings.length > 0) {
 	var enemyBuildingDist = 0;
 	for (var i = 0; i < enemyBuildings.length; i++) {
@@ -538,6 +540,10 @@ if (myBuildings.length > 0) {
 			closestEnemyBuilding = enemyBuildings[i];
 			mainEnemy = closestEnemyBuilding.getOwnerNumber();
 			mainEnemyTeam = closestEnemyBuilding.getTeamNumber();
+		}
+		if (enemyBuildingDist < closestNeutralBuildingDist && enemyBuildings[i].isNeutral()) {
+			closestNeutralBuildingDist = enemyBuildingDist;
+			closestNeutralBuilding = enemyBuildings[i];	
 		}
 	}
 }
@@ -840,7 +846,7 @@ for (var i=0; i < workers.length; i++){
 	else if (nearestEnemy == null){
 		for (var j = 0; j < enemyBuildings.length;j++){
 			var enemyDist = distance(workers[i].getX(), workers[i].getY(), enemyBuildings[j].getX(), enemyBuildings[j].getY());
-			if (enemyDist < nearestDist){
+			if (enemyDist < nearestDist && !enemyBuildings[j].isNeutral()){
 				nearestEnemy = enemyBuildings[j];
 				nearestDist = enemyDist;
 			}
@@ -991,6 +997,16 @@ if (fightingUnits.length > 0 && closestEnemyBuilding != null) {
 	else if ((myTeamArmyValue > enemyTeamArmyValue && time > ATTACKTIME) || currentSupply > 94){
 		scope.order("AMove", fightingUnits, {x: closestEnemyBuilding.getX(), y: closestEnemyBuilding.getY()});
 	}
+	else if (closestNeutralBuilding != null){
+		scope.order("Attack", fightingUnits, {unit: closestNeutralBuilding});
+
+		// scope.order("Attack", fightingUnits, {x : closestNeutralBuilding.getX(), y: closestNeutralBuilding.getY()});
+		// for (var i=0;i<fightingUnits.length;i++){
+		// 	if (distance(closestNeutralBuilding.getX(), closestNeutralBuilding.getY(), fightingUnits[i].getX(), fightingUnits[i].getY()) < 5){
+		// 		scope.order("Attack", [fightingUnits[i]], {unit: closestNeutralBuilding});		
+		// 	}
+		// }
+	}
 	//Resting
 	else {
 		if (myBuildings.length > 0) {
@@ -1027,6 +1043,11 @@ for (var i=0; i<mages.length && mageHeal == 1; i++){
 	for (var j = 0; j < fightingUnits.length; j++) {
 		if (fightingUnits[j].getCurrentHP() <= fightingUnits[j].unit.type.hp - 50 && distance(fightingUnits[j].getX(), fightingUnits[j].getY(), mages[i].getX(), mages[i].getY()) < mages[i].getFieldValue("range")+2) {
 			scope.order("Heal", [mages[i]], {unit: fightingUnits[j]});
+		}
+	}
+	for (var j = 0; j < workers.length; j++) {
+		if (workers[j].getCurrentHP() <= workers[j].unit.type.hp - 50 && distance(workers[j].getX(), workers[j].getY(), mages[i].getX(), mages[i].getY()) < mages[i].getFieldValue("range")+2) {
+			scope.order("Heal", [mages[i]], {unit: workers[j]});
 		}
 	}
 }
