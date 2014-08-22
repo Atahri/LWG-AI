@@ -18,6 +18,7 @@ Planned:
 - Choose nicer resting locations
 - Detect choke points
 - Combat units will move along the correct path to an enemy (if enemy blocks themselves in.
+- Ranged units will stagger step away from chasing enemies
 
 New in 1.02:
 - Workers will try to defend themselves enemies are near them
@@ -28,7 +29,6 @@ New in 1.02:
 - Workers shouldn't try to mine from goldmines without a castle as often
 - Bugfix: Castle placement to the right is now within the bounds of the isBuildable check
 - Bugfix: Stop units from blocking one another from building something that they've both got queued up (works most of the time)
-- Ranged units will now stagger step away from chasing enemies
 - Bugfix: workers no longer confused when one mine is the closest mine to two castles
 - Bugfix: non-ranged units will no longer try to attack flying units
 - Bugfix: barracks will be continue to be built into late game
