@@ -644,16 +644,16 @@ for (var i = 0; i < castles.length; i++) {
 }
 
 //Ratio of 3 rifles to 2 soldiers
-var numOfSoldiers = soldiers.length*3;
-var numOfRiflemen = riflemen.length*2;
-var numOfMages = mages.length*2;
+var numOfSoldiers = soldiers.length*5;
+var numOfRiflemen = riflemen.length*4;
+var numOfMages = mages.length*5;
 for (var i = 0; i < finishedBarracks.length; i++) {
 	if (finishedBarracks[i].getUnitTypeNameInProductionQueAt(1) == "Soldier") {
-		numOfSoldiers+=3;
+		numOfSoldiers+=5;
 	} else if (finishedBarracks[i].getUnitTypeNameInProductionQueAt(1) == "Rifleman") {
-		numOfRiflemen+=2;
+		numOfRiflemen+=4;
 	} else if (finishedBarracks[i].getUnitTypeNameInProductionQueAt(1) == "Mage") {
-		numOfMages+=2;
+		numOfMages+=5;
 	}
 }
 for (var i = 0; i < finishedBarracks.length && (barracks >= 2 || time > 120); i++) {
