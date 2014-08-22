@@ -31,10 +31,15 @@ New in 1.02:
 - Ranged units will now stagger step away from chasing enemies
 - Bugfix: workers no longer confused when one mine is the closest mine to two castles
 - Bugfix: non-ranged units will no longer try to attack flying units
+- Bugfix: barracks will be continue to be built into late game
+- Bugfix: towers will no longer deter AI as much
+- Bugfix: army no longer retreats if it's not close enough when another unit is encountered 
 
 New in 1.01:
 - Everything
 */
+
+
 
 var MAXWORKERS = 27; // Maximum number of workers we ever need
 var WORKERMINEDIST = 10; // Used to determine maximum distance for a worker to be worked by a mine
@@ -57,14 +62,10 @@ var MAGEVALUE = 2.5;
 var CATAVALUE = 3;
 var DRAGONVALUE = 4;
 
-var TOWERVALUE = 10;
+var TOWERVALUE = 6;
 var FORTVALUE = 10;
 
-var ARMYPOSITION = 0.3; // TODO use a more defensive model
-if (scope.getMapHeight() * scope.getMapWidth() < 450){
-	ARMYPOSITION = 0.15;
-}
-
+var ARMYPOSITION = 0.15;
 
 //Returns the distance between (x1, y1) and (x2, y2)
 var distance = function(x1, y1, x2, y2) {
@@ -120,16 +121,43 @@ var isBuildable = function(x1, y1, x2, y2) {
 //Finds a location and orders construction of newBuilding
 var constructBuilding = function(newBuilding) {
 	var myPlayerNumber = scope.getMyPlayerNumber();
-	var builders = scope.getUnits({type: "Worker", order: "Build " + newBuilding, player: myPlayerNumber});
+
+	var forgeBuilders = scope.getUnits({type: "Worker", order: "Build Forge", player: myPlayerNumber});
+	if (forgeBuilders.length > 1){
+		scope.order("Stop", [forgeBuilders[1]]);
+	}
+	var watchtowerBuilders = scope.getUnits({type: "Worker", order: "Build Watchtower", player: myPlayerNumber});
+	if (watchtowerBuilders.length > 1){
+		scope.order("Stop", [watchtowerBuilders[1]]);
+	}
+	
+	var barracksBuilders = scope.getUnits({type: "Worker", order: "Build Barracks", player: myPlayerNumber});
+	if (barracksBuilders.length > 1){
+		scope.order("Stop", [barracksBuilders[1]]);
+	}
+	var castleBuilders = scope.getUnits({type: "Worker", order: "Build Castle", player: myPlayerNumber});
+	if (castleBuilders.length > 1){
+		scope.order("Stop", [castleBuilders[1]]);
+	}
+	var houseBuilders = scope.getUnits({type: "Worker", order: "Build House", player: myPlayerNumber});
+	if (houseBuilders.length > 1){
+		scope.order("Stop", [houseBuilders[1]]);
+	}
+	var guildBuilders = scope.getUnits({type: "Worker", order: "Build Mages Guild", player: myPlayerNumber});
+	if (guildBuilders.length > 1){
+		scope.order("Stop", [guildBuilders[1]]);
+	}
+	var numBuilders = forgeBuilders.length + watchtowerBuilders.length + barracksBuilders.length + castleBuilders.length + houseBuilders.length + guildBuilders.length;
 
 	var finishedBuildings = scope.getBuildings({player:myPlayerNumber, onlyFinshed: true});
 	var allBuildings = scope.getBuildings({player:myPlayerNumber, onlyFinshed: false});
-
-	if (builders.length > (allBuildings.length - finishedBuildings.length)){
+	
+	if (numBuilders > (allBuildings.length - finishedBuildings.length)){
+		// console.log("Shouldn't build now!")
 		return; // don't try to build one thing twice at the same time - removes bad behaviour
 	}
+	// console.log("Building " + newBuilding);
 
-	var myBuildings = scope.getBuildings({player: myPlayerNumber});
 	var workers = scope.getUnits({type: "Worker", order: "Mine", player: myPlayerNumber});
 
 	var mines = scope.getBuildings({type: "Goldmine"});
@@ -159,16 +187,16 @@ var constructBuilding = function(newBuilding) {
 	}
 	
 	dance:
-	for (var i = 0; i < myBuildings.length; i++) {
-		buildingX = parseInt(myBuildings[i].getX());
-		buildingY = parseInt(myBuildings[i].getY());
-		closestMine = findClosest(myBuildings[i], mines);
-		if (myBuildings[i].getTypeName() == "Castle" || myBuildings[i].getTypeName() == "Forge") {
+	for (var i = 0; i < finishedBuildings.length; i++) {
+		buildingX = parseInt(finishedBuildings[i].getX());
+		buildingY = parseInt(finishedBuildings[i].getY());
+		closestMine = findClosest(finishedBuildings[i], mines);
+		if (finishedBuildings[i].getTypeName() == "Castle" || finishedBuildings[i].getTypeName() == "Forge") {
 			buildingX--;
 			buildingY--;
 			buildingLength = 4;
 			buildingWidth = 4;
-		} else if (myBuildings[i].getTypeName() == "House" || myBuildings[i].getTypeName() == "Barracks" || myBuildings[i].getTypeName() == "Mages Guild") {
+		} else if (finishedBuildings[i].getTypeName() == "House" || finishedBuildings[i].getTypeName() == "Barracks" || finishedBuildings[i].getTypeName() == "Mages Guild") {
 			buildingLength = 3;
 			buildingWidth = 3;
 		}
@@ -238,16 +266,11 @@ var constructBuilding = function(newBuilding) {
 
 //Finds a location and orders construction of a castle
 var constructCastle = function(skip) {
-	if (skip === undefined){
-		var skip = 0;
-	}
-	// console.log("Attempting Castle");
 	var myPlayerNumber = scope.getMyPlayerNumber();
 	var myBuildings = scope.getBuildings({player: myPlayerNumber});
 	var workers = scope.getUnits({type: "Worker", order: "Mine", player: myPlayerNumber});
 	var mines = scope.getBuildings({type: "Goldmine"});
-	if (skip > mines.length){
-		// Console.log("No castles possible!");
+	if (skip && skip > mines.length){
 		return;
 	}
 	var minesToBuilding = null;
@@ -261,7 +284,7 @@ var constructCastle = function(skip) {
 	var theGoldmineY = null;
 	var newCastleX = null;
 	var newCastleY = null;
-	
+	var skipper = skip;
 	if (myBuildings.length > 0) {
 		//Sorted list of Goldmine distance from one of my buildings
 		minesToBuilding = sortDistance(myBuildings[0], mines);
@@ -274,12 +297,12 @@ var constructCastle = function(skip) {
 				}
 			}
 			if (suitableMine) {
-				if (skip == 0){
+				if (!skipper || skipper == 0){
 					theGoldmine = minesToBuilding[i];
 					break;
 				}
 				else {
-					skip--;
+					skipper--;
 				}
 			}
 		}
@@ -336,7 +359,7 @@ var constructCastle = function(skip) {
 		}
 		else {
 			// console.log("Castle failed");
-			constructCastle(skip+1);
+			constructCastle(1+(skip || 0));
 		}
 	}
 }
@@ -620,17 +643,17 @@ for (var i = 0; i < castles.length; i++) {
 	}
 }
 
-//Training Soldiers and Riflemen to keep them even numbered
-var numOfSoldiers = soldiers.length;
-var numOfRiflemen = riflemen.length;
-var numOfMages = mages.length;
+//Ratio of 3 rifles to 2 soldiers
+var numOfSoldiers = soldiers.length*3;
+var numOfRiflemen = riflemen.length*2;
+var numOfMages = mages.length*2;
 for (var i = 0; i < finishedBarracks.length; i++) {
 	if (finishedBarracks[i].getUnitTypeNameInProductionQueAt(1) == "Soldier") {
-		numOfSoldiers++;
+		numOfSoldiers+=3;
 	} else if (finishedBarracks[i].getUnitTypeNameInProductionQueAt(1) == "Rifleman") {
-		numOfRiflemen++;
+		numOfRiflemen+=2;
 	} else if (finishedBarracks[i].getUnitTypeNameInProductionQueAt(1) == "Mage") {
-		numOfMages++;
+		numOfMages+=2;
 	}
 }
 for (var i = 0; i < finishedBarracks.length && (barracks >= 2 || time > 120); i++) {
@@ -669,11 +692,8 @@ if num barracks == 6, wait for upgrades:
 */
 if (gold >= BARRACKSCOST
 	&& finishedHouses.length > 0
-	&& castles.length *2 > barracks.length
-	&& miners.length >= barracks.length * 5   // adjust this to gold income and cost per barracks
-	&& (barracks.length < 6 
-		|| (weaponUpgrade == 5 && armorUpgrade == 5)
-		|| gold >= 400)) {
+	&& (castles.length *2 > barracks.length || gold >= 600)
+	&& (barracks.length < 6 || (weaponUpgrade == 5 && armorUpgrade == 5) || gold >= 400)) {
 	constructBuilding("Barracks");
 }
 
@@ -700,9 +720,9 @@ Forge 1 and 2 conditions:
 - Damage upgrade < 5 and Armor upgrade < 5
 */
 if (gold >= FORGECOST
-	&& castles.length > 2
+	&& castles.length >= 2 + forges.length
 	&& barracks.length > forges.length + 1
-	&& (weaponUpgrade + armorUpgrade < forges.length - 1)) { // better approximation than both < 5
+	&& (10 - (weaponUpgrade + armorUpgrade) > forges.length - 1)) { // better approximation than both < 5
 	constructBuilding("Forge");
 }
 
@@ -932,6 +952,9 @@ if (fightingUnits.length > 0 && closestEnemyBuilding != null) {
 			}
 			else if (closestDist < 30){
 				scope.order("AMove", [fightingUnits[i]], scope.getCenterOfUnits(enemyUnits));
+			}
+			else if ((myTeamArmyValue > enemyTeamArmyValue && time > ATTACKTIME) || currentSupply > 94){
+				scope.order("AMove", [fightingUnits[i]], {x: closestEnemyBuilding.getX(), y: closestEnemyBuilding.getY()});
 			}
 			else { //resting
 				if (myBuildings.length > 0) {
