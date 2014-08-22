@@ -820,11 +820,11 @@ for (var i=0; i < workers.length; i++){
 }
 
 // Retreat mechanism for wounded workers
-for (var i=0; i < attackingWorkers.length;i++){
+for (var i=0; i < workers.length;i++){
 	var closestCastle = null;
 	var castleDist = 99999;
 	for (var j=0;j<castles.length;j++){
-		var dist = distance(attackingWorkers[i].getX(), attackingWorkers[i].getY(), castles[j].getX(), castles[j].getY());
+		var dist = distance(workers[i].getX(), workers[i].getY(), castles[j].getX(), castles[j].getY());
 
 		if (dist < castleDist){
 			castleDist = dist;
@@ -832,13 +832,13 @@ for (var i=0; i < attackingWorkers.length;i++){
 		}
 	}
 	if (closestDist > 7){ // don't chase too deep with workers!
-		scope.order("Moveto", [attackingWorkers[i]], {unit:closestCastle});
+		scope.order("Moveto", [workers[i]], {unit:closestCastle});
 	}
-	else if (attackingWorkers[i].unit.targetUnit != null && attackingWorkers[i].unit.targetUnit.hp != undefined && attackingWorkers[i].unit.hp * 1.5 <= attackingWorkers[i].unit.targetUnit.hp){
+	else if (workers[i].unit.targetUnit != null && workers[i].unit.targetUnit.hp != undefined && workers[i].unit.hp * 1.5 <= workers[i].unit.targetUnit.hp){
 		var nearestEnemy = null;
 		var nearestDist = 99999;
 		for (var j = 0; j < enemyUnits.length;j++){
-			var enemyDist = distance(attackingWorkers[i].getX(), attackingWorkers[i].getY(), enemyUnits[j].getX(), enemyUnits[j].getY());
+			var enemyDist = distance(workers[i].getX(), workers[i].getY(), enemyUnits[j].getX(), enemyUnits[j].getY());
 			if (enemyDist < nearestDist){
 				nearestEnemy = enemyUnits[j];
 				nearestDist = enemyDist;
@@ -846,7 +846,7 @@ for (var i=0; i < attackingWorkers.length;i++){
 		}
 		// the distance they are apart is the distance your unit moves away, in the opposite direction
 		if (nearestDist <= 7){
-			scope.order("Move", [attackingWorkers[i]], {x: attackingWorkers[i].getX() - (nearestEnemy.getX() - attackingWorkers[i].getX())*4, y:  attackingWorkers[i].getY() - (nearestEnemy.getY() - attackingWorkers[i].getY())*4});
+			scope.order("Move", [workers[i]], {x: workers[i].getX() - (nearestEnemy.getX() - workers[i].getX())*4, y:  workers[i].getY() - (nearestEnemy.getY() - workers[i].getY())*4});
 		}
 	}
 }
