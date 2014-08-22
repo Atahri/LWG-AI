@@ -45,7 +45,7 @@ var MAXWORKERS = 27; // Maximum number of workers we ever need
 var WORKERMINEDIST = 10; // Used to determine maximum distance for a worker to be worked by a mine
 var MINEDIST = 5; // Used to keep buildings from blocking goldmines
 var ATTACKTIME = 120; // Earliest time the AI will attack
-var WORKERSPERMINE = 7; // Most workers per mine (mostly for debugging)
+var WORKERSPERMINE = 8; // Most workers per mine (mostly for debugging)
 
 //Building Costs
 var HOUSECOST = 100;
@@ -188,8 +188,8 @@ var constructBuilding = function(newBuilding) {
 	
 	dance:
 	for (var i = 0; i < finishedBuildings.length; i++) {
-		buildingX = parseInt(finishedBuildings[i].getX());
-		buildingY = parseInt(finishedBuildings[i].getY());
+		buildingX = finishedBuildings[i].getX();
+		buildingY = finishedBuildings[i].getY();
 		closestMine = findClosest(finishedBuildings[i], mines);
 		if (finishedBuildings[i].getTypeName() == "Castle" || finishedBuildings[i].getTypeName() == "Forge") {
 			buildingX--;
@@ -292,7 +292,7 @@ var constructCastle = function(skip) {
 			suitableMine = true;
 			for (var j = 0; j < allCastlesAndForts.length; j++) {
 				dist = distance(minesToBuilding[i].getX(), minesToBuilding[i].getY(), allCastlesAndForts[j].getX(), allCastlesAndForts[j].getY());
-				if (dist <= 10) {
+				if (dist <= 10 && minesToBuilding[i].unit.gold > 500) {
 					suitableMine = false;
 				}
 			}
@@ -643,7 +643,7 @@ for (var i = 0; i < castles.length; i++) {
 	}
 }
 
-//Ratio of 3 rifles to 2 soldiers
+//Ratio of 5 rifles to 4 soldiers and 4 mages
 var numOfSoldiers = soldiers.length*5;
 var numOfRiflemen = riflemen.length*4;
 var numOfMages = mages.length*5;
@@ -685,8 +685,7 @@ Constructing Non-House or Non-Castle Buildings
 Barracks conditions:
  - We have enough gold to build a barracks
  - # of finishedHouses > 0
- - # of castles * 2 - 1 > barracks.length
-if num barracks == 6, wait for upgrades:
+if num barracks == 6, wait for upgrades or a stack of goldmines: 
  - Damage upgrade = 5
  - Armor upgrade = 5
 */
