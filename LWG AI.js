@@ -188,8 +188,8 @@ var constructBuilding = function(newBuilding) {
 	
 	dance:
 	for (var i = 0; i < finishedBuildings.length; i++) {
-		buildingX = finishedBuildings[i].getX();
-		buildingY = finishedBuildings[i].getY();
+		buildingX = finishedBuildings[i].getX() | 0; // bitwise or 0 is for fast truncate
+		buildingY = finishedBuildings[i].getY() | 0;
 		closestMine = findClosest(finishedBuildings[i], mines);
 		if (finishedBuildings[i].getTypeName() == "Castle" || finishedBuildings[i].getTypeName() == "Forge") {
 			buildingX--;
