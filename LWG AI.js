@@ -10,10 +10,14 @@ Version Release Date: Aug 22, 2014
 
 Planned:
 - Workers choose construction location based on their own location (preference closer candidates)
-- Option for Wolves + Dragons
+- Wolves, dragons, catapults
 - Detection of choke points, for blocking/defending
 - Attack neutral to avoid towers
 - Defend against some cheeses (wolf + cat and castle blocking)
+- Better castle placement algorithm (more versatile for different maps)
+- Choose nicer resting locations
+- Detect choke points
+- Combat units will move along the correct path to an enemy (if enemy blocks themselves in.
 
 New in 1.02:
 - Workers will try to defend themselves enemies are near them
@@ -237,13 +241,13 @@ var constructCastle = function(skip) {
 	if (skip === undefined){
 		var skip = 0;
 	}
-	console.log("Attempting Castle");
+	// console.log("Attempting Castle");
 	var myPlayerNumber = scope.getMyPlayerNumber();
 	var myBuildings = scope.getBuildings({player: myPlayerNumber});
 	var workers = scope.getUnits({type: "Worker", order: "Mine", player: myPlayerNumber});
 	var mines = scope.getBuildings({type: "Goldmine"});
 	if (skip > mines.length){
-		Console.log("No castles possible!");
+		// Console.log("No castles possible!");
 		return;
 	}
 	var minesToBuilding = null;
@@ -286,52 +290,52 @@ var constructCastle = function(skip) {
 		
 		//Above
 		if (isBuildable(theGoldmineX - 1, theGoldmineY - 9, theGoldmineX + 2, theGoldmineY - 1)) {
-			console.log(1);
+			// console.log(1);
 			newCastleX = theGoldmineX - 1;
 			newCastleY = theGoldmineY - 9;
 		} else if (isBuildable(theGoldmineX, theGoldmineY - 9, theGoldmineX + 3, theGoldmineY - 1)) {
-			console.log(2);
+			// console.log(2);
 			newCastleX = theGoldmineX;
 			newCastleY = theGoldmineY - 9;
 		}
 		//Below
 		else if (isBuildable(theGoldmineX - 1, theGoldmineY + 3, theGoldmineX + 2, theGoldmineY + 11)) {
-			console.log(3);
+			// console.log(3);
 			newCastleX = theGoldmineX - 1;
 			newCastleY = theGoldmineY + 8;
 		} else if (isBuildable(theGoldmineX, theGoldmineY + 3, theGoldmineX + 3, theGoldmineY + 11)) {
-			console.log(4);
+			// console.log(4);
 			newCastleX = theGoldmineX;
 			newCastleY = theGoldmineY + 8;
 		}
 		//Left
 		else if (isBuildable(theGoldmineX - 9, theGoldmineY - 1, theGoldmineX - 1, theGoldmineY + 2)) {
-			console.log(5);
+			// console.log(5);
 			newCastleX = theGoldmineX - 9;
 			newCastleY = theGoldmineY - 1;
 		} else if (isBuildable(theGoldmineX - 9, theGoldmineY, theGoldmineX - 1, theGoldmineY + 3)) {
-			console.log(6);
+			// console.log(6);
 			newCastleX = theGoldmineX - 9;
 			newCastleY = theGoldmineY;
 		}
 		//Right
 		else if (isBuildable(theGoldmineX + 3, theGoldmineY - 1, theGoldmineX + 11, theGoldmineY + 2)) {
-			console.log(7);
+			// console.log(7);
 			newCastleX = theGoldmineX + 8;
 			newCastleY = theGoldmineY - 1 ;
 		} else if (isBuildable(theGoldmineX + 3, theGoldmineY, theGoldmineX + 11, theGoldmineY + 3)) {
-			console.log(8);
+			// console.log(8);
 			newCastleX = theGoldmineX + 8;
 			newCastleY = theGoldmineY;
 		}
 		
 		if (newCastleX != null) {
 			scope.order("Build Castle", workers, {x: newCastleX, y: newCastleY});
-			console.log("Castle built for:");
-			console.log(theGoldmine);
+			// console.log("Castle built for:");
+			// console.log(theGoldmine);
 		}
 		else {
-			console.log("Castle failed");
+			// console.log("Castle failed");
 			constructCastle(skip+1);
 		}
 	}
@@ -714,7 +718,7 @@ for (var i = 0; i < idleWorkers.length; i++) {
 		var castle = castles[j];
 		if (dist < castleDist){
 			nearestCastle = castle;
-			nearestDist = dist;
+			castleDist = dist;
 		}
 	}
 	if (time > 100 && myBuildings.length > myFinishedBuildings.length && miners.length + idleWorkers.length == workers.length){
@@ -727,7 +731,7 @@ for (var i = 0; i < idleWorkers.length; i++) {
 			}
 	 	}
 	}
-	else if (nearestDist > 11 && nearestCastle != null){
+	else if (castleDist > 11 && nearestCastle != null){
 		scope.order("Moveto", [idleWorkers[i]], {unit: nearestCastle});
 	}
 	else if (nearestCastle != null) {
@@ -793,19 +797,28 @@ var enemyUnits = scope.getUnits({enemyOf: myPlayerNumber});
 for (var i=0; i < workers.length; i++){
 	var nearestEnemy = null;
 	var nearestDist = 99999;
+	var lowestHp = 999;
+	var bestTarget = null;
 	for (var j = 0; j < enemyUnits.length;j++){
 		var enemyDist = distance(workers[i].getX(), workers[i].getY(), enemyUnits[j].getX(), enemyUnits[j].getY());
-		if (enemyDist < nearestDist && !enemyUnits[i].unit.type.flying){
+		var hp = enemyUnits[j].unit.hp;
+		if (enemyDist < nearestDist && !enemyUnits[j].unit.type.flying){
 			nearestEnemy = enemyUnits[j];
 			nearestDist = enemyDist;
 		}
+		if (hp < lowestHp && enemyDist < 2 && hp < workers[i].unit.hp){
+			lowestHp = hp;
+			bestTarget = enemyUnits[i];
+		}
+
 	}
-	//TODO split into type of attacking unit
-	if (nearestEnemy != null && nearestDist <= Math.max(nearestEnemy.getFieldValue("range")+1, 4)  && workers[i].unit.hp * 1.0 / workers[i].getFieldValue("hp") >= nearestEnemy.unit.hp * 0.5 / nearestEnemy.getFieldValue("hp")){ 
-	    // TODO calc number of hits it will take and number of hits can be taken
+	if (bestTarget != null){
+		scope.order("Attack", [workers[i]], {unit: bestTarget});
+	}
+	else if (nearestEnemy != null && nearestDist <= Math.max(nearestEnemy.getFieldValue("range")+1, 5)  && workers[i].unit.hp * 1.0 / workers[i].getFieldValue("hp") >= nearestEnemy.unit.hp * 0.5 / nearestEnemy.getFieldValue("hp")){ 
 		scope.order("Attack", [workers[i]], {unit: nearestEnemy});
 	}
-	if (nearestEnemy == null){
+	else if (nearestEnemy == null){
 		for (var j = 0; j < enemyBuildings.length;j++){
 			var enemyDist = distance(workers[i].getX(), workers[i].getY(), enemyBuildings[j].getX(), enemyBuildings[j].getY());
 			if (enemyDist < nearestDist){
@@ -825,16 +838,24 @@ for (var i=0; i < workers.length;i++){
 	var castleDist = 99999;
 	for (var j=0;j<castles.length;j++){
 		var dist = distance(workers[i].getX(), workers[i].getY(), castles[j].getX(), castles[j].getY());
-
 		if (dist < castleDist){
 			castleDist = dist;
 			closestCastle = castles[j];
 		}
 	}
-	if (closestDist > 7){ // don't chase too deep with workers!
+	var nearestEnemy = null;
+	var nearestDist = 99999;
+	for (var j = 0; j < enemyUnits.length;j++){
+		var enemyDist = distance(workers[i].getX(), workers[i].getY(), enemyUnits[j].getX(), enemyUnits[j].getY());
+		if (enemyDist < nearestDist){
+			nearestEnemy = enemyUnits[j];
+			nearestDist = enemyDist;
+		}
+	}
+	if (castleDist > 11 && nearestDist < 8 && !(workers[i].unit.targetUnit != null && workers[i].unit.hp / workers[i].unit.targetUnit.hp >= 3)){ // don't chase too deep with workers unless you're winning by far!
 		scope.order("Moveto", [workers[i]], {unit:closestCastle});
 	}
-	else if (workers[i].unit.targetUnit != null && workers[i].unit.targetUnit.hp != undefined && workers[i].unit.hp * 1.5 <= workers[i].unit.targetUnit.hp){
+	else {
 		var nearestEnemy = null;
 		var nearestDist = 99999;
 		for (var j = 0; j < enemyUnits.length;j++){
@@ -845,8 +866,15 @@ for (var i=0; i < workers.length;i++){
 			}
 		}
 		// the distance they are apart is the distance your unit moves away, in the opposite direction
-		if (nearestDist <= 7){
-			scope.order("Move", [workers[i]], {x: workers[i].getX() - (nearestEnemy.getX() - workers[i].getX())*4, y:  workers[i].getY() - (nearestEnemy.getY() - workers[i].getY())*4});
+		if (nearestDist <= 9 && nearestEnemy.unit.hp >= workers[i].unit.hp * 2) {
+			var dx =  workers[i].getX() - (nearestEnemy.getX() - workers[i].getX())*2;
+			var dy = workers[i].getY() - (nearestEnemy.getY() - workers[i].getY())*2;
+			if (isBuildable(Math.floor(dx),Math.floor(dy),Math.ceil(dx),Math.ceil(dy))) { // worker not trapped
+				scope.order("Move", [workers[i]], {x: dx, y: dy });
+			}
+			else {
+				scope.order("Attack", [workers[i]], {unit: nearestEnemy });	
+			}
 		}
 	}
 }
@@ -863,7 +891,7 @@ var enemyTeamTowers = getBuildings({type: "Watchtower", team: mainEnemyTeam});
 var enemyTeamForts = getBuildings({type: "Fortress", team: mainEnemyTeam});
 var enemyTeamBarracks = getBuildings({type: "Barracks", team: mainEnemyTeam});
 
-enemyTeamArmyValue += (enemyTeamTowers.length * TOWERVALUE) + (enemyTeamForts.length * FORTVALUE) + enemyTeamBarracks;
+enemyTeamArmyValue += (enemyTeamTowers.length * TOWERVALUE) + (enemyTeamForts.length * FORTVALUE) + enemyTeamBarracks.length;
 
 if (fightingUnits.length > 0 && closestEnemyBuilding != null) {
 	//Defending
@@ -880,11 +908,11 @@ if (fightingUnits.length > 0 && closestEnemyBuilding != null) {
 			for (var j = 0; j < enemyUnits.length; j++){
 				var hp = enemyUnits[j].unit.hp;
 				var distToEnemy = distance(fightingUnits[i].getX(), fightingUnits[i].getY(), enemyUnits[j].getX(), enemyUnits[j].getY());
-				if (enemyUnits[j].unit.targetUnit != null && enemyUnits[j].unit.targetUnit.id != fightingUnits[i].unit.id && distToEnemy <= kiteDistance){
+				if (enemyUnits[j].unit.targetUnit != null && enemyUnits[j].unit.targetUnit.id == fightingUnits[i].unit.id && distToEnemy <= kiteDistance){
 					kiteUnit = enemyUnits[j];
 					kiteDistance = distToEnemy;
 				}
-				if (hp < lowestHp && distToEnemy <= fightingUnits[i].getFieldValue("range") + 1 && (!enemyUnits[i].unit.type.flying || (fightingUnits[i].getFieldValue("range") >= 3))) {
+				if (hp < lowestHp && distToEnemy <= fightingUnits[i].getFieldValue("range") + 1 && (!enemyUnits[j].unit.type.flying || (fightingUnits[i].getFieldValue("range") >= 3))) {
 					lowestHp = hp;
 					bestTarget = enemyUnits[j];
 				}	
@@ -938,7 +966,7 @@ if (fightingUnits.length > 0 && closestEnemyBuilding != null) {
 		
 	}
 	//Attacking
-	else if ((myTeamArmyValue > enemyTeamArmyValue && time > ATTACKTIME) || currentSupply > 94){ // 
+	else if ((myTeamArmyValue > enemyTeamArmyValue && time > ATTACKTIME) || currentSupply > 94){
 		scope.order("AMove", fightingUnits, {x: closestEnemyBuilding.getX(), y: closestEnemyBuilding.getY()});
 	}
 	//Resting
