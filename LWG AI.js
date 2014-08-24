@@ -1,8 +1,8 @@
 /*
 LWG AI
-Authors: 
-	TolZ 1.0 to 1.01
-	Atahri 1.01 to 1.02
+Authors:
+    TolZ 1.0 to 1.01 
+    Atahri 1.01 to 1.02
 
 For LWG Version: 1.9
 AI Version: 1.02
@@ -45,7 +45,7 @@ var MAXWORKERS = 27; // Maximum number of workers we ever need
 var WORKERMINEDIST = 10; // Used to determine maximum distance for a worker to be worked by a mine
 var MINEDIST = 5; // Used to keep buildings from blocking goldmines
 var ATTACKTIME = 120; // Earliest time the AI will attack
-var WORKERSPERMINE = 8; // Most workers per mine (mostly for debugging)
+var WORKERSPERMINE = 9; // Most workers per mine (mostly for debugging)
 
 //Building Costs
 var HOUSECOST = 100;
@@ -65,25 +65,25 @@ var DRAGONVALUE = 6;
 var TOWERVALUE = 10;
 var FORTVALUE = 16;
 
-var ARMYPOSITION = 0.15;
+var ARMYPOSITION = 0.18;
 
 
-function shuffle(o){ //v1.0
-    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+var shuffle = function (o) {
+    for (var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
     return o;
 };
 
 //Returns the distance between (x1, y1) and (x2, y2)
 var distance = function(x1, y1, x2, y2) {
 	return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
-}
+};
 
 //Takes in an object: object1 and an array of objects: arr1 and finds the closest object in arr1 to object1
 var findClosest = function(object1, arr1) {
 	var objectX = object1.getX();
 	var objectY = object1.getY();
 	var closest = arr1[0];
-	var closestDist = distance(objectX, objectY, closest.getX(), closest.getY())
+	var closestDist = distance(objectX, objectY, closest.getX(), closest.getY());
 	for (var i = 1; i < arr1.length; i++) {
 		var currentDist = distance(objectX, objectY, arr1[i].getX(), arr1[i].getY());
 		if (closestDist >  currentDist) {
@@ -92,7 +92,7 @@ var findClosest = function(object1, arr1) {
 		}
 	}
 	return closest;
-}
+};
 
 //Sort an array based on the distance from an object (arr1[0] is closest, arr1[arr1.length - 1] is furthest)
 var sortDistance = function(object1, arr1) {
@@ -110,7 +110,7 @@ var sortDistance = function(object1, arr1) {
 		}
 	}
 	return arr1;
-}
+};
 
 //Determines if a building can be built in the box with top-left corner (x1,y1) and bottom-right corner (x2,y2)
 var isBuildable = function(x1, y1, x2, y2) {
@@ -122,7 +122,7 @@ var isBuildable = function(x1, y1, x2, y2) {
 		}
 	}
 	return true;
-}
+};
 
 //Finds a location and orders construction of newBuilding
 var constructBuilding = function(newBuilding) {
@@ -163,7 +163,7 @@ var constructBuilding = function(newBuilding) {
 
 	var isNotBuilder = function(element){
 		return element.unit.order.name != "Repair"; //element.unit.order.name.split(" ")[0] != "Build" && 
-	}
+	};
 	var workers = scope.getUnits({type: "Worker", player: myPlayerNumber}).filter(isNotBuilder);
 
 	var mines = scope.getBuildings({type: "Goldmine"});
@@ -214,8 +214,7 @@ var constructBuilding = function(newBuilding) {
 		startY = buildingY - newBuildingWidth - 2;
 		endValue = buildingX + buildingWidth;
 		for (; startX <= endValue; startX++) {
-			if (isBuildable(startX, startY, startX + newBuildingWidth + 1, startY + newBuildingLength + 1)
-				&& distance(startX + 1, startY + 1, closestMine.getX(), closestMine.getY()) > MINEDIST) {
+			if (isBuildable(startX, startY, startX + newBuildingWidth + 1, startY + newBuildingLength + 1) && distance(startX + 1, startY + 1, closestMine.getX(), closestMine.getY()) > MINEDIST) {
 				newBuildingX = startX + 1;
 				newBuildingY = startY + 1;
 				break dance;
@@ -227,8 +226,7 @@ var constructBuilding = function(newBuilding) {
 		startY = buildingY + buildingLength;
 		endValue = buildingX + buildingWidth;
 		for (; startX <= endValue; startX++) {
-			if (isBuildable(startX, startY, startX + newBuildingWidth + 1, startY + newBuildingLength + 1)
-				&& distance(startX + 1, startY + 1, closestMine.getX(), closestMine.getY()) > MINEDIST){
+			if (isBuildable(startX, startY, startX + newBuildingWidth + 1, startY + newBuildingLength + 1) && distance(startX + 1, startY + 1, closestMine.getX(), closestMine.getY()) > MINEDIST){
 				newBuildingX = startX + 1;
 				newBuildingY = startY + 1;
 				break dance;
@@ -240,8 +238,7 @@ var constructBuilding = function(newBuilding) {
 		startY = buildingY - newBuildingWidth - 2;
 		endValue = buildingY + buildingLength;
 		for (; startY <= endValue; startY++) {
-			if (isBuildable(startX, startY, startX + newBuildingWidth + 1, startY + newBuildingLength + 1)
-			&& distance(startX + 1, startY + 1, closestMine.getX(), closestMine.getY()) > MINEDIST) {
+			if (isBuildable(startX, startY, startX + newBuildingWidth + 1, startY + newBuildingLength + 1) && distance(startX + 1, startY + 1, closestMine.getX(), closestMine.getY()) > MINEDIST) {
 				newBuildingX = startX + 1;
 				newBuildingY = startY + 1;
 				break dance;
@@ -253,8 +250,7 @@ var constructBuilding = function(newBuilding) {
 		startY = buildingY - newBuildingWidth - 2;
 		endValue = buildingY + buildingLength;
 		for (; startY <= endValue; startY++) {
-			if (isBuildable(startX, startY, startX + newBuildingWidth + 1, startY + newBuildingLength + 1)
-				&& distance(startX + 1, startY + 1, closestMine.getX(), closestMine.getY()) > MINEDIST) {
+			if (isBuildable(startX, startY, startX + newBuildingWidth + 1, startY + newBuildingLength + 1) && distance(startX + 1, startY + 1, closestMine.getX(), closestMine.getY()) > MINEDIST) {
 				newBuildingX = startX + 1;
 				newBuildingY = startY + 1;
 				break dance;
@@ -262,7 +258,7 @@ var constructBuilding = function(newBuilding) {
 		}	
 	}
 	
-	if (newBuildingX != null) {
+	if (newBuildingX !== null) {
 		buildOrder = "Build " + newBuilding;
 		scope.order(buildOrder, workers, {x: newBuildingX, y: newBuildingY});
 	}
@@ -270,7 +266,7 @@ var constructBuilding = function(newBuilding) {
 	else {
 		constructCastle();
 	}
-}
+};
 
 //Finds a location and orders construction of a castle
 var constructCastle = function(skip) {
@@ -309,7 +305,7 @@ var constructCastle = function(skip) {
 				}
 			}
 			if (suitableMine) {
-				if (!skipper || skipper == 0){
+				if (!skipper || skipper === 0){
 					theGoldmine = minesToBuilding[i];
 					break;
 				}
@@ -319,7 +315,7 @@ var constructCastle = function(skip) {
 			}
 		}
 	} 
-	if (theGoldmine != null) {
+	if (theGoldmine !== null) {
 		theGoldmineX = parseInt(theGoldmine.getX());
 		theGoldmineY = parseInt(theGoldmine.getY());
 		
@@ -364,7 +360,7 @@ var constructCastle = function(skip) {
 			newCastleY = theGoldmineY;
 		}
 		
-		if (newCastleX != null) {
+		if (newCastleX !== null) {
 			scope.order("Build Castle", workers, {x: newCastleX, y: newCastleY});
 			// console.log("Castle built for:");
 			// console.log(theGoldmine);
@@ -374,7 +370,7 @@ var constructCastle = function(skip) {
 			constructCastle(1+(skip || 0));
 		}
 	}
-}
+};
 
 //Edit the scope.getUnits functions so the computer doesn't have to see them to know they're there
 var getUnits = function(filter)
@@ -386,17 +382,17 @@ var getUnits = function(filter)
 	
 	for(var i = 0; i < game.units.length; i++)
 		if(
-			(!filter.type || filter.type == game.units[i].type.name)
-			&& (!filter.notOfType || filter.notOfType != game.units[i].type.name)
-			&& (!filter.player || filter.player == game.units[i].owner.number)
-			&& (!filter.team || filter.team == game.units[i].owner.team.number)
-			&& (!filter.order || filter.order == game.units[i].order.name)
-			&& (!filter.enemyOf || !game.players[filter.enemyOf] || (game.players[filter.enemyOf].team.number != game.units[i].owner.team.number && game.players[filter.enemyOf].team.number != 0))
+			(!filter.type || filter.type == game.units[i].type.name) &&
+			(!filter.notOfType || filter.notOfType != game.units[i].type.name) &&
+			(!filter.player || filter.player == game.units[i].owner.number) &&
+			(!filter.team || filter.team == game.units[i].owner.team.number) &&
+			(!filter.order || filter.order == game.units[i].order.name) &&
+			(!filter.enemyOf || !game.players[filter.enemyOf] || (game.players[filter.enemyOf].team.number != game.units[i].owner.team.number && game.players[filter.enemyOf].team.number !== 0))
 		)
 			units.push(new UnitWrapper(game.units[i]));
 	
 	return units;
-}
+};
 
 //Edit the scope.getBuildings functions so the computer doesn't have to see them to know they're there
 var getBuildings = function(filter)
@@ -408,18 +404,18 @@ var getBuildings = function(filter)
 	
 	for(var i = 0; i < game.buildings.length; i++)
 		if(
-			(!filter.type || filter.type == game.buildings[i].type.name)
-			&& (!filter.notOftype || filter.notOftype != game.buildings[i].type.name)
-			&& (!filter.player || filter.player == game.buildings[i].owner.number)
-			&& (!filter.team || filter.team == game.buildings[i].owner.team.number)
-			&& (!filter.order || filter.order == game.buildings[i].order.name)
-			&& (!filter.onlyFinshed || !game.buildings[i].isUnderConstruction)
-			&& (!filter.enemyOf || !game.players[filter.enemyOf] || (game.players[filter.enemyOf].team.number != game.buildings[i].owner.team.number && game.players[filter.enemyOf].team.number != 0))
+			(!filter.type || filter.type == game.buildings[i].type.name) &&
+			(!filter.notOftype || filter.notOftype != game.buildings[i].type.name) &&
+			(!filter.player || filter.player == game.buildings[i].owner.number) &&
+			(!filter.team || filter.team == game.buildings[i].owner.team.number) &&
+			(!filter.order || filter.order == game.buildings[i].order.name) &&
+			(!filter.onlyFinshed || !game.buildings[i].isUnderConstruction) &&
+			(!filter.enemyOf || !game.players[filter.enemyOf] || (game.players[filter.enemyOf].team.number != game.buildings[i].owner.team.number && game.players[filter.enemyOf].team.number !== 0))
 		)
 			buildings.push(new UnitWrapper(game.buildings[i]));
 	
 	return buildings;
-}
+};
 
 //Calculates the value of a teams army
 var getTeamArmyValue = function(teamNum) {
@@ -430,11 +426,11 @@ var getTeamArmyValue = function(teamNum) {
 	var wolves = getUnits({type: "Wolf", team: teamNum}).length;
 	var catapaults = getUnits({type: "Catapault", team: teamNum}).length;
 	var dragons = getUnits({type: "Dragon", team: teamNum}).length;
-	var teamArmyValue = (wolves * WOLFVALUE) + (soldiers * SOLDIERVALUE) + (riflemen * RIFLEMANVALUE)
-	+ (mages * MAGEVALUE) + (catapaults * CATAVALUE) + (dragons * DRAGONVALUE);
+	var teamArmyValue = (wolves * WOLFVALUE) + (soldiers * SOLDIERVALUE) + (riflemen * RIFLEMANVALUE) +
+	(mages * MAGEVALUE) + (catapaults * CATAVALUE) + (dragons * DRAGONVALUE);
 	
 	return teamArmyValue;
-}
+};
 
 /**************************************
 Game Variables
@@ -541,21 +537,27 @@ var enemyBuildings = getBuildings({enemyOf: myPlayerNumber, notOftype:"Goldmine"
 //This method of picking a target seems bad and I will change it later
 var closestEnemyBuildingDist = 99999;
 var closestEnemyBuilding = null;
-var closestNeutralBuildingDist = 25;
+var buildingClosestToEnemy = null;
+var closestNeutralBuildingDist = 99999;
 var closestNeutralBuilding = null;
+
 if (myBuildings.length > 0) {
 	var enemyBuildingDist = 0;
+
 	for (var i = 0; i < enemyBuildings.length; i++) {
-		enemyBuildingDist = distance(myBuildings[0].getX(), myBuildings[0].getY(), enemyBuildings[i].getX(), enemyBuildings[i].getY());
-		if (enemyBuildingDist < closestEnemyBuildingDist && !enemyBuildings[i].isNeutral()) {
-			closestEnemyBuildingDist = enemyBuildingDist;
-			closestEnemyBuilding = enemyBuildings[i];
-			mainEnemy = closestEnemyBuilding.getOwnerNumber();
-			mainEnemyTeam = closestEnemyBuilding.getTeamNumber();
-		}
-		if (enemyBuildingDist < closestNeutralBuildingDist && enemyBuildings[i].isNeutral()) {
-			closestNeutralBuildingDist = enemyBuildingDist;
-			closestNeutralBuilding = enemyBuildings[i];	
+		for (var j=0; j<myBuildings.length; j++){
+			enemyBuildingDist = distance(myBuildings[0].getX(), myBuildings[0].getY(), enemyBuildings[i].getX(), enemyBuildings[i].getY());
+			if (enemyBuildingDist < closestEnemyBuildingDist && !enemyBuildings[i].isNeutral()) {
+				closestEnemyBuildingDist = enemyBuildingDist;
+				closestEnemyBuilding = enemyBuildings[i];
+				buildingClosestToEnemy = myBuildings[j];
+				mainEnemy = closestEnemyBuilding.getOwnerNumber();
+				mainEnemyTeam = closestEnemyBuilding.getTeamNumber();
+			}
+			if (enemyBuildingDist < closestNeutralBuildingDist && enemyBuildings[i].isNeutral()) {
+				closestNeutralBuildingDist = enemyBuildingDist;
+				closestNeutralBuilding = enemyBuildings[i];	
+			}
 		}
 	}
 }
@@ -581,12 +583,13 @@ Conditions for further houses:
 - //There are no castles currently being built
 - We have at least one castle
 */
-if (!buildOrdered && gold >= HOUSECOST
-	&& maxSupply - currentSupply < 5
-	&& maxSupply < MAX_SUPPLY
-	&& houses.length == finishedHouses.length
-	&& castles.length > 0) {
+if (!buildOrdered && gold >= HOUSECOST &&
+	maxSupply - currentSupply < 5 &&
+	maxSupply < MAX_SUPPLY &&
+	houses.length == finishedHouses.length &&
+	castles.length > 0) {
 	constructBuilding("House");
+	gold -= HOUSECOST;
 	buildOrdered=true;
 }
 
@@ -606,6 +609,7 @@ Constructing Castles
 if (!buildOrdered && gold >= CASTLECOST){
 	if (castles.length * 2 <= barracks.length) {
 		constructCastle();
+		gold -= CASTLECOST;
 		buildOrdered=true;
 	}
 }
@@ -624,10 +628,10 @@ for (var i = 0; i < finishedForges.length; i++) {
 }
 for (var i = 0; i < finishedForges.length; i++) {
 	if (!finishedForges[i].getUnitTypeNameInProductionQueAt(1)) {
-		if (weaponUpgrade > armorUpgrade && armorUpgrade < 5) {
+		if (weaponUpgrade > armorUpgrade && armorUpgrade < 5 && gold > armorUpgrade * 50 + 140) {
 			scope.order("Armor Upgrade", [finishedForges[i]]);
 			armorUpgrade++;
-		} else if (weaponUpgrade < 5) {
+		} else if (weaponUpgrade < 5  && gold > weaponUpgrade * 50 + 140) {
 			scope.order("Attack Upgrade", [finishedForges[i]]);
 			weaponUpgrade++;
 		}
@@ -635,9 +639,10 @@ for (var i = 0; i < finishedForges.length; i++) {
 }
 
 //Mage Upgrades
-if (finishedGuilds.length > 0 && mageHeal == 0) {
+if (finishedGuilds.length > 0 && mageHeal === 0 && gold >= 300) {
 	if (!finishedGuilds[0].getUnitTypeNameInProductionQueAt(1)) {
 		scope.order("Research Heal", [finishedGuilds[0]]);
+		gold -= 300;
 	}
 }
 /*
@@ -659,8 +664,9 @@ for (var i = 0; i < finishedCastles.length; i++) {
 	} 
 }
 for (var i = 0; i < castles.length; i++) {
-	if (workers.length < workerMax && !castles[i].getUnitTypeNameInProductionQueAt(1)) {
+	if (workers.length < workerMax && !castles[i].getUnitTypeNameInProductionQueAt(1) && gold > 60) {
 		scope.order("Train Worker", [castles[i]]);
+		gold-=60;
 		workerMax--;
 	}
 }
@@ -687,14 +693,17 @@ for (var i = 0; i < finishedBarracks.length && (barracks >= 2 || time > 120); i+
 		else {
 			least = Math.min(numOfSoldiers, numOfRiflemen);
 		}
-		if (least == numOfRiflemen) {
+		if (least == numOfRiflemen  && gold > 80) {
 			scope.order("Train Rifleman", [finishedBarracks[i]]);
+			gold-=80;
 			numOfRiflemen++;
-		} else if (least == numOfSoldiers) {
+		} else if (least == numOfSoldiers && gold > 80) {
 			scope.order("Train Soldier", [finishedBarracks[i]]);
+			gold-=80;
 			numOfSoldiers++;
-		} else if (least == numOfMages) {
+		} else if (least == numOfMages && gold > 145) {
 			scope.order("Train Mage", [finishedBarracks[i]]);
+			gold-=145;
 			numOfMages++;
 		}
 	}
@@ -711,11 +720,12 @@ if num barracks == 6, wait for upgrades or a stack of goldmines:
  - Damage upgrade = 5
  - Armor upgrade = 5
 */
-if (!buildOrdered && gold >= BARRACKSCOST
-	&& finishedHouses.length > 0
-	&& (castles.length *2 > barracks.length || gold >= 600)
-	&& (barracks.length < 6 || (weaponUpgrade == 5 && armorUpgrade == 5) || gold >= 400)) {
+if (!buildOrdered && gold >= BARRACKSCOST &&
+	finishedHouses.length > 0 &&
+	(castles.length *2 > barracks.length || gold >= 600) &&
+	(barracks.length < 6 || (weaponUpgrade == 5 && armorUpgrade == 5) || gold >= 400)) {
 	constructBuilding("Barracks");
+	gold -= BARRACKSCOST;
 	buildOrdered=true;
 }
 
@@ -726,11 +736,12 @@ Mages Guild conditions:
 - # of barracks > 1
 - # of guilds == 0
 */
-if (!buildOrdered && gold >= GUILDCOST
-	&& castles.length > 1
-	&& barracks.length > 1
-	&& guilds.length == 0) {
+if (!buildOrdered && gold >= GUILDCOST &&
+	castles.length > 1 &&
+	barracks.length > 1 &&
+	guilds.length === 0) {
 	constructBuilding("Mages Guild");
+	gold -=GUILDCOST;
 	buildOrdered=true;
 }
 
@@ -742,11 +753,12 @@ Forge 1 and 2 conditions:
 - # of forges < 2
 - Damage upgrade < 5 and Armor upgrade < 5
 */
-if (!buildOrdered && gold >= FORGECOST
-	&& castles.length >= 2 + forges.length
-	&& barracks.length > forges.length + 1
-	&& (10 - (weaponUpgrade + armorUpgrade) > forges.length - 1)) { // better approximation than both < 5
+if (!buildOrdered && gold >= FORGECOST &&
+	castles.length >= 2 + forges.length &&
+	barracks.length > forges.length + 1 &&
+	(10 - (weaponUpgrade + armorUpgrade) > forges.length - 1)) { // better approximation than both < 5
 	constructBuilding("Forge");
+	gold-=FORGECOST;
 	buildOrdered=true;
 }
 
@@ -775,10 +787,10 @@ for (var i = 0; i < idleWorkers.length; i++) {
 			}
 	 	}
 	}
-	else if (castleDist > 11 && nearestCastle != null){
+	else if (castleDist > 11 && nearestCastle !== null){
 		scope.order("Moveto", [idleWorkers[i]], {unit: nearestCastle});
 	}
-	else if (nearestCastle != null) {
+	else if (nearestCastle !== null) {
 		var nearestMine = null;
 		var nearestDist = 99999;
 		for (var j = 0; j < mines.length; j++) {
@@ -856,13 +868,14 @@ for (var i=0; i < workers.length; i++){
 		}
 
 	}
-	if (bestTarget != null){
+	if (bestTarget !== null){
 		scope.order("Attack", [workers[i]], {unit: bestTarget});
 	}
-	else if (nearestEnemy != null && nearestDist <= Math.max(nearestEnemy.getFieldValue("range")+1, 5)  && workers[i].unit.hp * 1.0 / workers[i].getFieldValue("hp") >= nearestEnemy.unit.hp * 0.5 / nearestEnemy.getFieldValue("hp")){ 
+	else if (nearestEnemy !== null && nearestDist <= Math.max(nearestEnemy.getFieldValue("range")+1, 5)  && workers[i].unit.hp * 1.0 / workers[i].getFieldValue("hp") >= nearestEnemy.unit.hp * 0.5 / nearestEnemy.getFieldValue("hp")){ 
 		scope.order("Attack", [workers[i]], {unit: nearestEnemy});
 	}
-	else if (nearestEnemy == null){
+	else if (nearestEnemy === undefined){
+		var nearestDist = 99999;
 		for (var j = 0; j < enemyBuildings.length;j++){
 			var enemyDist = distance(workers[i].getX(), workers[i].getY(), enemyBuildings[j].getX(), enemyBuildings[j].getY());
 			if (enemyDist < nearestDist){
@@ -896,7 +909,7 @@ for (var i=0; i < workers.length;i++){
 			nearestDist = enemyDist;
 		}
 	}
-	if (castleDist > 11 && nearestDist < 8 && !(workers[i].unit.targetUnit != null && workers[i].unit.hp / workers[i].unit.targetUnit.hp >= 3)){ // don't chase too deep with workers unless you're winning by far!
+	if (castleDist > 11 && nearestDist < 8 && !(workers[i].unit.targetUnit !== null && workers[i].unit.hp / workers[i].unit.targetUnit.hp >= 3)){ // don't chase too deep with workers unless you're winning by far!
 		scope.order("Moveto", [workers[i]], {unit:closestCastle});
 	}
 	else {
@@ -934,10 +947,13 @@ var enemyTeamArmyValue = getTeamArmyValue(mainEnemyTeam);
 var enemyTeamTowers = getBuildings({type: "Watchtower", team: mainEnemyTeam});
 var enemyTeamForts = getBuildings({type: "Fortress", team: mainEnemyTeam});
 var enemyTeamBarracks = getBuildings({type: "Barracks", team: mainEnemyTeam});
+var enemyTeamTowerValue = 0;
+for (var i=0;i<enemyTeamTowers.length;i++){
+	  enemyTeamTowerValue += TOWERVALUE - Math.max(i*2, 4);
+}
+enemyTeamArmyValue += enemyTeamTowerValue + (enemyTeamForts.length * FORTVALUE) + enemyTeamBarracks.length;
 
-enemyTeamArmyValue += (enemyTeamTowers.length * TOWERVALUE) + (enemyTeamForts.length * FORTVALUE) + enemyTeamBarracks.length;
-
-if (fightingUnits.length > 0 && closestEnemyBuilding != null) {
+if (fightingUnits.length > 0 && closestEnemyBuilding !== null) {
 	//Defending
 	//Get enemy units that we can see
 	//aim at the lowest hp target in range, or amove to the closest
@@ -952,7 +968,7 @@ if (fightingUnits.length > 0 && closestEnemyBuilding != null) {
 			for (var j = 0; j < enemyUnits.length; j++){
 				var hp = enemyUnits[j].unit.hp;
 				var distToEnemy = distance(fightingUnits[i].getX(), fightingUnits[i].getY(), enemyUnits[j].getX(), enemyUnits[j].getY());
-				if (enemyUnits[j].unit.targetUnit != null && enemyUnits[j].unit.targetUnit.id == fightingUnits[i].unit.id && distToEnemy <= kiteDistance){
+				if (enemyUnits[j].unit.targetUnit !== null && enemyUnits[j].unit.targetUnit.id == fightingUnits[i].unit.id && distToEnemy <= kiteDistance){
 					kiteUnit = enemyUnits[j];
 					kiteDistance = distToEnemy;
 				}
@@ -967,91 +983,114 @@ if (fightingUnits.length > 0 && closestEnemyBuilding != null) {
 			}
 
 			//replace hp with number of hits to take down and rate of fire
-			if (kiteUnit != null && kiteUnit.unit.targetUnit.hp >= fightingUnits[i].unit.hp * 1.5 && fightingUnits[i].getFieldValue("range") > Math.max(kiteUnit.getFieldValue("range"),2) && kiteDistance < Math.abs(fightingUnits[i].getFieldValue("range") - 3)){
+			if (kiteUnit !== null && kiteUnit.unit.targetUnit.hp >= fightingUnits[i].unit.hp * 1.5 && fightingUnits[i].getFieldValue("range") > Math.max(kiteUnit.getFieldValue("range"),2) && kiteDistance < Math.abs(fightingUnits[i].getFieldValue("range") - 3)){
 				scope.order("Move", [fightingUnits[i]], {x: fightingUnits[i].getX() - (kiteUnit.getX() - fightingUnits[i].getX())*2, y:  fightingUnits[i].getY() - (kiteUnit.getY() - fightingUnits[i].getY())*2}); // kiting
-			} else if (fightingUnits[i].unit.blocking && fightingUnits[i].getFieldValue("range") > 4){
-				scope.order("Move", [fightingUnits[i]], {unit: bestTarget}); // move out of the way of friendlies
-			} else if (bestTarget != null){
-				scope.order("Attack", [fightingUnits[i]], {unit: bestTarget});
+			}
+			 else if (bestTarget !== null){
+			 	if (fightingUnits[i].unit.targetUnit != bestTarget){
+					scope.order("Attack", [fightingUnits[i]], {unit: bestTarget});
+				}
 			}
 			else if (closestDist < 30){
-				scope.order("AMove", [fightingUnits[i]], scope.getCenterOfUnits(enemyUnits));
+				var lastPath = fightingUnits[i].unit.path;
+				if (lastPath.length === 0){
+					scope.order("AMove", [fightingUnits[i]], scope.getCenterOfUnits(enemyUnits));	
+				}
+				else {
+					var lastPath = lastPath[lastPath.length-1]; 
+					var lastX = lastPath.x;
+					var lastY = lastPath.y;
+					var thisTarget =  scope.getCenterOfUnits(enemyUnits);
+					var thisUnitDist = distance(thisTarget.x, thisTarget.y, lastX, lastY);
+					if (thisUnitDist > 10){
+						scope.order("AMove", [fightingUnits[i]], scope.getCenterOfUnits(enemyUnits));	
+					}
+				}
 			}
-			else if ((myTeamArmyValue > enemyTeamArmyValue && time > ATTACKTIME) || currentSupply > 94){
+			else if (time % 5 === 0 && ((myTeamArmyValue > enemyTeamArmyValue && time > ATTACKTIME) || currentSupply > 94)){
 				scope.order("AMove", [fightingUnits[i]], {x: closestEnemyBuilding.getX(), y: closestEnemyBuilding.getY()});
 			}
 			else { //resting
-				if (myBuildings.length > 0) {
+				if (myBuildings.length > 0 && time % 5 === 0) {
 					//Find a nice resting spot
-					var xPosition = closestEnemyBuilding.getX() - myBuildings[myBuildings.length - 1].getX();
+					var xPosition = closestEnemyBuilding.getX() -buildingClosestToEnemy.getX();
 					xPosition = xPosition * (ARMYPOSITION - 0.03);
-					xPosition = xPosition + myBuildings[myBuildings.length - 1].getX();
-					var yPosition = closestEnemyBuilding.getY() - myBuildings[myBuildings.length - 1].getY();
+					xPosition = xPosition + buildingClosestToEnemy.getX();
+					var yPosition = closestEnemyBuilding.getY() - buildingClosestToEnemy.getY();
 					yPosition = yPosition * (ARMYPOSITION - 0.03);
-					yPosition = yPosition + myBuildings[myBuildings.length - 1].getY();
+					yPosition = yPosition + buildingClosestToEnemy.getY();
 					
 					scope.order("AMove", mages, {x: xPosition, y: yPosition});
 
-					var xPosition = closestEnemyBuilding.getX() - myBuildings[myBuildings.length - 1].getX();
+					var xPosition = closestEnemyBuilding.getX() - buildingClosestToEnemy.getX();
 					xPosition = xPosition * (ARMYPOSITION + 0.02);
-					xPosition = xPosition + myBuildings[myBuildings.length - 1].getX();
-					var yPosition = closestEnemyBuilding.getY() - myBuildings[myBuildings.length - 1].getY();
+					xPosition = xPosition + buildingClosestToEnemy.getX();
+					var yPosition = closestEnemyBuilding.getY() - buildingClosestToEnemy.getY();
 					yPosition = yPosition * (ARMYPOSITION + 0.02);
-					yPosition = yPosition + myBuildings[myBuildings.length - 1].getY();
+					yPosition = yPosition + buildingClosestToEnemy.getY();
 					scope.order("AMove", soldiers, {x: xPosition, y: yPosition});
 
-					var xPosition = closestEnemyBuilding.getX() - myBuildings[myBuildings.length - 1].getX();
+					var xPosition = closestEnemyBuilding.getX() - buildingClosestToEnemy.getX();
 					xPosition = xPosition * ARMYPOSITION;
-					xPosition = xPosition + myBuildings[myBuildings.length - 1].getX();
-					var yPosition = closestEnemyBuilding.getY() - myBuildings[myBuildings.length - 1].getY();
+					xPosition = xPosition + buildingClosestToEnemy.getX();
+					var yPosition = closestEnemyBuilding.getY() - buildingClosestToEnemy.getY();
 					yPosition = yPosition * ARMYPOSITION;
-					yPosition = yPosition + myBuildings[myBuildings.length - 1].getY();
+					yPosition = yPosition + buildingClosestToEnemy.getY();
 					scope.order("AMove", riflemen, {x: xPosition, y: yPosition});
 				}
 			}
-		};
+		}
 		
 	}
 	//Attacking
 	else if ((myTeamArmyValue > enemyTeamArmyValue && time > ATTACKTIME) || currentSupply > 94){
-		scope.order("AMove", fightingUnits, {x: closestEnemyBuilding.getX(), y: closestEnemyBuilding.getY()});
+		var averageX = 0;
+		var averageY = 0;
+		for (var i = 0; i < fightingUnits.length;i++){
+			averageX += fightingUnits[i].getX();
+			averageY += fightingUnits[i].getY();
+		}
+		averageX /= fightingUnits.length;
+		averageY /= fightingUnits.length;
+		var counter = 0;
+		for (var i = 0; i < fightingUnits.length;i++){
+			if (distance(fightingUnits[i].getX(), fightingUnits[i].getY(), averageX, averageY) > 20){
+				counter++;
+			}
+		}
+		if (counter <= 2){
+			scope.order("AMove", fightingUnits, {x: closestEnemyBuilding.getX(), y: closestEnemyBuilding.getY()});
+		}
 	}
-	else if (closestNeutralBuilding != null){
+	else if (closestNeutralBuilding !== null){
 		scope.order("Attack", fightingUnits, {unit: closestNeutralBuilding});
-
-		// scope.order("Attack", fightingUnits, {x : closestNeutralBuilding.getX(), y: closestNeutralBuilding.getY()});
-		// for (var i=0;i<fightingUnits.length;i++){
-		// 	if (distance(closestNeutralBuilding.getX(), closestNeutralBuilding.getY(), fightingUnits[i].getX(), fightingUnits[i].getY()) < 5){
-		// 		scope.order("Attack", [fightingUnits[i]], {unit: closestNeutralBuilding});		
-		// 	}
-		// }
 	}
 	//Resting
 	else {
-		if (myBuildings.length > 0) {
+		if (myBuildings.length > 0 && time % 5 === 0) {
 			//Find a nice resting spot
-			var xPosition = closestEnemyBuilding.getX() - myBuildings[myBuildings.length - 1].getX();
-			xPosition = xPosition * (ARMYPOSITION - 0.03);
-			xPosition = xPosition + myBuildings[myBuildings.length - 1].getX();
-			var yPosition = closestEnemyBuilding.getY() - myBuildings[myBuildings.length - 1].getY();
-			yPosition = yPosition * (ARMYPOSITION - 0.03);
-			yPosition = yPosition + myBuildings[myBuildings.length - 1].getY();
+			var xPosition = closestEnemyBuilding.getX() - buildingClosestToEnemy.getX();
+			xPosition = xPosition * (ARMYPOSITION - 0.02);
+			xPosition = xPosition + buildingClosestToEnemy.getX();
+			var yPosition = closestEnemyBuilding.getY() - buildingClosestToEnemy.getY();
+			yPosition = yPosition * (ARMYPOSITION - 0.02);
+			yPosition = yPosition + buildingClosestToEnemy.getY();
 			scope.order("AMove", mages, {x: xPosition, y: yPosition});
 
-			var xPosition = closestEnemyBuilding.getX() - myBuildings[myBuildings.length - 1].getX();
-			xPosition = xPosition * (ARMYPOSITION + 0.02);
-			xPosition = xPosition + myBuildings[myBuildings.length - 1].getX();
-			var yPosition = closestEnemyBuilding.getY() - myBuildings[myBuildings.length - 1].getY();
-			yPosition = yPosition * (ARMYPOSITION + 0.02);
-			yPosition = yPosition + myBuildings[myBuildings.length - 1].getY();
+			var xPosition = closestEnemyBuilding.getX() - buildingClosestToEnemy.getX();
+			xPosition = xPosition * (ARMYPOSITION + 0.01);
+			xPosition = xPosition + buildingClosestToEnemy.getX();
+			var yPosition = closestEnemyBuilding.getY() - buildingClosestToEnemy.getY();
+			yPosition = yPosition * (ARMYPOSITION + 0.01);
+			yPosition = yPosition + buildingClosestToEnemy.getY();
 			scope.order("AMove", soldiers, {x: xPosition, y: yPosition});
 
-			var xPosition = closestEnemyBuilding.getX() - myBuildings[myBuildings.length - 1].getX();
+			var xPosition = closestEnemyBuilding.getX() - buildingClosestToEnemy.getX();
 			xPosition = xPosition * ARMYPOSITION;
-			xPosition = xPosition + myBuildings[myBuildings.length - 1].getX();
-			var yPosition = closestEnemyBuilding.getY() - myBuildings[myBuildings.length - 1].getY();
+			xPosition = xPosition + buildingClosestToEnemy.getX();
+			var yPosition = closestEnemyBuilding.getY() - buildingClosestToEnemy.getY();
 			yPosition = yPosition * ARMYPOSITION;
-			yPosition = yPosition + myBuildings[myBuildings.length - 1].getY();
+			yPosition = yPosition + buildingClosestToEnemy.getY();
 			scope.order("AMove", riflemen, {x: xPosition, y: yPosition});
 		}
 	}
@@ -1059,6 +1098,9 @@ if (fightingUnits.length > 0 && closestEnemyBuilding != null) {
 
 //Mages Heal
 for (var i=0; i<mages.length && mageHeal == 1; i++){
+	if (mages[i].unit.mana < 30){
+		continue;
+	}
 	for (var j = 0; j < fightingUnits.length; j++) {
 		if (fightingUnits[j].getCurrentHP() <= fightingUnits[j].unit.type.hp - 50 && distance(fightingUnits[j].getX(), fightingUnits[j].getY(), mages[i].getX(), mages[i].getY()) < mages[i].getFieldValue("range")+2) {
 			scope.order("Heal", [mages[i]], {unit: fightingUnits[j]});
