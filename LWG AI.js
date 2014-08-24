@@ -59,13 +59,19 @@ var WOLFVALUE = 1.5;
 var SOLDIERVALUE = 2;
 var RIFLEMANVALUE = 2;
 var MAGEVALUE = 2.5;
-var CATAVALUE = 3;
-var DRAGONVALUE = 4;
+var CATAVALUE = 5;
+var DRAGONVALUE = 6;
 
-var TOWERVALUE = 6;
-var FORTVALUE = 10;
+var TOWERVALUE = 10;
+var FORTVALUE = 16;
 
 var ARMYPOSITION = 0.15;
+
+
+function shuffle(o){ //v1.0
+    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+};
 
 //Returns the distance between (x1, y1) and (x2, y2)
 var distance = function(x1, y1, x2, y2) {
@@ -185,6 +191,8 @@ var constructBuilding = function(newBuilding) {
 		newBuildingLength = 4;
 		newBuildingWidth = 4;
 	}
+
+	finishedBuildings = shuffle(finishedBuildings);
 	
 	dance:
 	for (var i = 0; i < finishedBuildings.length; i++) {
@@ -194,11 +202,11 @@ var constructBuilding = function(newBuilding) {
 		if (finishedBuildings[i].getTypeName() == "Castle" || finishedBuildings[i].getTypeName() == "Forge") {
 			buildingX--;
 			buildingY--;
+			buildingLength = 5;
+			buildingWidth = 5;
+		} else if (finishedBuildings[i].getTypeName() == "House" || finishedBuildings[i].getTypeName() == "Barracks" || finishedBuildings[i].getTypeName() == "Mages Guild") {
 			buildingLength = 4;
 			buildingWidth = 4;
-		} else if (finishedBuildings[i].getTypeName() == "House" || finishedBuildings[i].getTypeName() == "Barracks" || finishedBuildings[i].getTypeName() == "Mages Guild") {
-			buildingLength = 3;
-			buildingWidth = 3;
 		}
 		
 		//Above
@@ -270,6 +278,10 @@ var constructCastle = function(skip) {
 	var myBuildings = scope.getBuildings({player: myPlayerNumber});
 	var workers = scope.getUnits({type: "Worker", order: "Mine", player: myPlayerNumber});
 	var mines = scope.getBuildings({type: "Goldmine"});
+	var castleBuilders = scope.getUnits({type:"Worker", order:"Build Castle", player:myPlayerNumber});
+	if (castleBuilders.length >= 1){
+		return;
+	}
 	if (skip && skip > mines.length){
 		return;
 	}
@@ -292,7 +304,7 @@ var constructCastle = function(skip) {
 			suitableMine = true;
 			for (var j = 0; j < allCastlesAndForts.length; j++) {
 				dist = distance(minesToBuilding[i].getX(), minesToBuilding[i].getY(), allCastlesAndForts[j].getX(), allCastlesAndForts[j].getY());
-				if (dist <= 10 && minesToBuilding[i].unit.gold > 500) {
+				if (dist <= 12 || minesToBuilding[i].unit.gold < 500) {
 					suitableMine = false;
 				}
 			}
@@ -548,6 +560,9 @@ if (myBuildings.length > 0) {
 	}
 }
 
+
+
+var buildOrdered = false;
 /**************************************
 Constructing Houses
 **************************************/
@@ -566,13 +581,13 @@ Conditions for further houses:
 - //There are no castles currently being built
 - We have at least one castle
 */
-if (gold >= HOUSECOST
+if (!buildOrdered && gold >= HOUSECOST
 	&& maxSupply - currentSupply < 5
-	&& maxSupply < 100
+	&& maxSupply < MAX_SUPPLY
 	&& houses.length == finishedHouses.length
-	&& houses.length <= 6
 	&& castles.length > 0) {
 	constructBuilding("House");
+	buildOrdered=true;
 }
 
 /**************************************
@@ -588,9 +603,10 @@ Constructing Castles
 	ratio is 2*castles
 */
 
-if (gold >= CASTLECOST){
+if (!buildOrdered && gold >= CASTLECOST){
 	if (castles.length * 2 <= barracks.length) {
 		constructCastle();
+		buildOrdered=true;
 	}
 }
 
@@ -695,11 +711,12 @@ if num barracks == 6, wait for upgrades or a stack of goldmines:
  - Damage upgrade = 5
  - Armor upgrade = 5
 */
-if (gold >= BARRACKSCOST
+if (!buildOrdered && gold >= BARRACKSCOST
 	&& finishedHouses.length > 0
 	&& (castles.length *2 > barracks.length || gold >= 600)
 	&& (barracks.length < 6 || (weaponUpgrade == 5 && armorUpgrade == 5) || gold >= 400)) {
 	constructBuilding("Barracks");
+	buildOrdered=true;
 }
 
 /*
@@ -709,11 +726,12 @@ Mages Guild conditions:
 - # of barracks > 1
 - # of guilds == 0
 */
-if (gold >= GUILDCOST
+if (!buildOrdered && gold >= GUILDCOST
 	&& castles.length > 1
 	&& barracks.length > 1
 	&& guilds.length == 0) {
 	constructBuilding("Mages Guild");
+	buildOrdered=true;
 }
 
 /*
@@ -724,11 +742,12 @@ Forge 1 and 2 conditions:
 - # of forges < 2
 - Damage upgrade < 5 and Armor upgrade < 5
 */
-if (gold >= FORGECOST
+if (!buildOrdered && gold >= FORGECOST
 	&& castles.length >= 2 + forges.length
 	&& barracks.length > forges.length + 1
 	&& (10 - (weaponUpgrade + armorUpgrade) > forges.length - 1)) { // better approximation than both < 5
 	constructBuilding("Forge");
+	buildOrdered=true;
 }
 
 /**************************************
@@ -846,7 +865,7 @@ for (var i=0; i < workers.length; i++){
 	else if (nearestEnemy == null){
 		for (var j = 0; j < enemyBuildings.length;j++){
 			var enemyDist = distance(workers[i].getX(), workers[i].getY(), enemyBuildings[j].getX(), enemyBuildings[j].getY());
-			if (enemyDist < nearestDist && !enemyBuildings[j].isNeutral()){
+			if (enemyDist < nearestDist){
 				nearestEnemy = enemyBuildings[j];
 				nearestDist = enemyDist;
 			}
