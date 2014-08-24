@@ -65,7 +65,7 @@ var DRAGONVALUE = 6;
 var TOWERVALUE = 10;
 var FORTVALUE = 16;
 
-var ARMYPOSITION = 0.18;
+var ARMYPOSITION = 0.20;
 
 
 var shuffle = function (o) {
@@ -136,7 +136,6 @@ var constructBuilding = function(newBuilding) {
 	if (watchtowerBuilders.length == 1 && newBuilding == "Watchtower"){
 		return;
 	}
-	
 	var barracksBuilders = scope.getUnits({type: "Worker", order: "Build Barracks", player: myPlayerNumber});
 	if (barracksBuilders.length == 1 && newBuilding == "Barracks"){
 		return;
@@ -607,7 +606,7 @@ Constructing Castles
 */
 
 if (!buildOrdered && gold >= CASTLECOST){
-	if (castles.length * 2 <= barracks.length) {
+	if (castles.length * 1.5 <= barracks.length) {
 		constructCastle();
 		gold -= CASTLECOST;
 		buildOrdered=true;
@@ -849,6 +848,7 @@ if (castles.length > 0){
 }
 
 //Making workers defend themselves for early game
+// TODO run from dragons
 var enemyUnits = scope.getUnits({enemyOf: myPlayerNumber});
 for (var i=0; i < workers.length; i++){
 	var nearestEnemy = null;
@@ -862,7 +862,7 @@ for (var i=0; i < workers.length; i++){
 			nearestEnemy = enemyUnits[j];
 			nearestDist = enemyDist;
 		}
-		if (hp < lowestHp && enemyDist < 2 && hp < workers[i].unit.hp){
+		if (hp < lowestHp && enemyDist < 2 && hp < workers[i].unit.hp && !enemyUnits[j].unit.type.flying){
 			lowestHp = hp;
 			bestTarget = enemyUnits[i];
 		}
@@ -913,15 +913,6 @@ for (var i=0; i < workers.length;i++){
 		scope.order("Moveto", [workers[i]], {unit:closestCastle});
 	}
 	else {
-		var nearestEnemy = null;
-		var nearestDist = 99999;
-		for (var j = 0; j < enemyUnits.length;j++){
-			var enemyDist = distance(workers[i].getX(), workers[i].getY(), enemyUnits[j].getX(), enemyUnits[j].getY());
-			if (enemyDist < nearestDist){
-				nearestEnemy = enemyUnits[j];
-				nearestDist = enemyDist;
-			}
-		}
 		// the distance they are apart is the distance your unit moves away, in the opposite direction
 		if (nearestDist <= 9 && nearestEnemy.unit.hp >= workers[i].unit.hp * 2) {
 			var dx =  workers[i].getX() - (nearestEnemy.getX() - workers[i].getX())*2;
@@ -968,30 +959,31 @@ if (fightingUnits.length > 0 && closestEnemyBuilding !== null) {
 			for (var j = 0; j < enemyUnits.length; j++){
 				var hp = enemyUnits[j].unit.hp;
 				var distToEnemy = distance(fightingUnits[i].getX(), fightingUnits[i].getY(), enemyUnits[j].getX(), enemyUnits[j].getY());
-				if (enemyUnits[j].unit.targetUnit !== null && enemyUnits[j].unit.targetUnit.id == fightingUnits[i].unit.id && distToEnemy <= kiteDistance){
-					kiteUnit = enemyUnits[j];
-					kiteDistance = distToEnemy;
-				}
+				// if (enemyUnits[j].unit.targetUnit !== null && enemyUnits[j].unit.targetUnit.id == fightingUnits[i].unit.id && distToEnemy <= kiteDistance){
+				// 	kiteUnit = enemyUnits[j];
+				// 	kiteDistance = distToEnemy;
+				// }
 				if (hp < lowestHp && distToEnemy <= fightingUnits[i].getFieldValue("range") + 1 && (!enemyUnits[j].unit.type.flying || (fightingUnits[i].getFieldValue("range") >= 3))) {
 					lowestHp = hp;
 					bestTarget = enemyUnits[j];
 				}	
-				if (distToEnemy < closestDist){
+				if (distToEnemy < closestDist && (!enemyUnits[j].unit.type.flying || (fightingUnits[i].getFieldValue("range") >= 3))){
 					closestDist = distToEnemy;
 					closestEnemy = enemyUnits[i];
 				}
 			}
 
 			//replace hp with number of hits to take down and rate of fire
-			if (kiteUnit !== null && kiteUnit.unit.targetUnit.hp >= fightingUnits[i].unit.hp * 1.5 && fightingUnits[i].getFieldValue("range") > Math.max(kiteUnit.getFieldValue("range"),2) && kiteDistance < Math.abs(fightingUnits[i].getFieldValue("range") - 3)){
-				scope.order("Move", [fightingUnits[i]], {x: fightingUnits[i].getX() - (kiteUnit.getX() - fightingUnits[i].getX())*2, y:  fightingUnits[i].getY() - (kiteUnit.getY() - fightingUnits[i].getY())*2}); // kiting
-			}
-			 else if (bestTarget !== null){
+			// if (kiteUnit !== null && kiteUnit.unit.targetUnit.hp >= fightingUnits[i].unit.hp * 1.5 && fightingUnits[i].getFieldValue("range") > Math.max(kiteUnit.getFieldValue("range"),2) && kiteDistance < Math.abs(fightingUnits[i].getFieldValue("range") - 3)){
+			// 	scope.order("Move", [fightingUnits[i]], {x: fightingUnits[i].getX() - (kiteUnit.getX() - fightingUnits[i].getX())*2, y:  fightingUnits[i].getY() - (kiteUnit.getY() - fightingUnits[i].getY())*2}); // kiting
+			// }
+			//  else 
+			if (bestTarget !== null){
 			 	if (fightingUnits[i].unit.targetUnit != bestTarget){
 					scope.order("Attack", [fightingUnits[i]], {unit: bestTarget});
 				}
 			}
-			else if (closestDist < 30){
+			else if (closestDist < 40){
 				var lastPath = fightingUnits[i].unit.path;
 				if (lastPath.length === 0){
 					scope.order("AMove", [fightingUnits[i]], scope.getCenterOfUnits(enemyUnits));	
@@ -1007,11 +999,11 @@ if (fightingUnits.length > 0 && closestEnemyBuilding !== null) {
 					}
 				}
 			}
-			else if (time % 5 === 0 && ((myTeamArmyValue > enemyTeamArmyValue && time > ATTACKTIME) || currentSupply > 94)){
+			else if (time % 10 === 0 && ((myTeamArmyValue > enemyTeamArmyValue && time > ATTACKTIME) || currentSupply > 94)){
 				scope.order("AMove", [fightingUnits[i]], {x: closestEnemyBuilding.getX(), y: closestEnemyBuilding.getY()});
 			}
 			else { //resting
-				if (myBuildings.length > 0 && time % 5 === 0) {
+				if (myBuildings.length > 0 && time % 15 === 0) {
 					//Find a nice resting spot
 					var xPosition = closestEnemyBuilding.getX() -buildingClosestToEnemy.getX();
 					xPosition = xPosition * (ARMYPOSITION - 0.03);
@@ -1062,7 +1054,7 @@ if (fightingUnits.length > 0 && closestEnemyBuilding !== null) {
 			scope.order("AMove", fightingUnits, {x: closestEnemyBuilding.getX(), y: closestEnemyBuilding.getY()});
 		}
 	}
-	else if (closestNeutralBuilding !== null){
+	else if (closestNeutralBuilding !== null && time % 60 == 0){
 		scope.order("Attack", fightingUnits, {unit: closestNeutralBuilding});
 	}
 	//Resting
